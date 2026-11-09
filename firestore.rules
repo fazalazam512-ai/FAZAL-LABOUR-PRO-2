@@ -1,0 +1,30 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null && (
+        request.auth.token.email == 'arshadlaidbeer@gmail.com' ||
+        request.auth.uid == 'arshadlaidbeer'
+      );
+    }
+
+    function isOwner(userId) {
+      return request.auth != null && (
+        request.auth.uid == userId ||
+        isAdmin()
+      );
+    }
+
+    match /users/{userId} {
+      allow list: if request.auth != null;
+      allow read, write: if isOwner(userId);
+
+      match /{collectionName}/{documentId} {
+        allow list: if isOwner(userId);
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}
+
